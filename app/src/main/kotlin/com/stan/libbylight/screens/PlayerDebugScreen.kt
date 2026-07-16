@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,10 +33,14 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.viewinterop.AndroidView
 import com.stan.libbylight.LibbyBridge
 import com.stan.libbylight.LibbyWebPlayer
 import com.stan.libbylight.library.LoanItem
+import com.stan.libbylight.libby.LibbyConnectCoordinator
+import com.stan.libbylight.libby.LibbyConnectState
+import com.stan.libbylight.libby.LibbySessionState
 import com.stan.libbylight.player.PlayerState
 import com.stan.libbylight.ui.LightBarButton
 import com.stan.libbylight.ui.LightBottomBar
@@ -60,10 +65,14 @@ private const val TAG = "LibbyLight"
 fun PlayerDebugScreen() {
     var state by remember { mutableStateOf(PlayerState()) }
     var currentUrl by remember { mutableStateOf("") }
-    var sessionReady by remember { mutableStateOf(false) }
-    var showBooks by remember { mutableStateOf(false) }
+    val connectState by LibbyConnectCoordinator.connectState.collectAsState()
+    val libbySessionState by LibbyConnectCoordinator.sessionState.collectAsState()
+    val sessionReady = libbySessionState == LibbySessionState.Connected
+    var showBooks by remember { mutableStateOf(true) }
     var showSettings by remember { mutableStateOf(false) }
-    var revealLibby by remember { mutableStateOf(false) }
+    var showLibbySource by remember { mutableStateOf(false) }
+    var showLibbyConnect by remember { mutableStateOf(false) }
+    var showDisconnectConfirmation by remember { mutableStateOf(false) }
 
     var loans by remember { mutableStateOf<List<LoanItem>>(emptyList()) }
     var activeLoan by remember { mutableStateOf<LoanItem?>(null) }
@@ -71,9 +80,7 @@ fun PlayerDebugScreen() {
     var booksLoading by remember { mutableStateOf(false) }
     var booksMessage by remember { mutableStateOf("") }
     var lastBridgeUrl by remember { mutableStateOf("") }
-
     val isLoanPage = currentUrl.contains("/open/loan/")
-    val showNativeUi = sessionReady && !revealLibby
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Libby remains mounted and rendered beneath Bard's native UI.
@@ -89,31 +96,60 @@ fun PlayerDebugScreen() {
                     }
                 }
             },
-            update = { webView ->
-                if (!showNativeUi) webView.requestFocus()
-            },
+            update = { webView -> webView.clearFocus() },
         )
 
         when {
-            !sessionReady || revealLibby -> {
-                if (sessionReady) {
-                    LibbyRecoveryBar(
-                        onDone = {
-                            revealLibby = false
-                            showBooks = !isLoanPage
-                        },
-                        modifier = Modifier.align(Alignment.TopCenter),
-                    )
-                }
+            showLibbyConnect -> {
+                LibbyConnectScreen(
+                    state = connectState,
+                    onBack = {
+                        LibbyConnectCoordinator.cancelConnection()
+                        showLibbyConnect = false
+                    },
+                    onNewCode = LibbyConnectCoordinator::requestNewCode,
+                    onRetry = LibbyConnectCoordinator::startConnection,
+                    onCancel = {
+                        LibbyConnectCoordinator.cancelConnection()
+                        showLibbyConnect = false
+                    },
+                )
+            }
+
+            showDisconnectConfirmation -> {
+                DisconnectLibbyScreen(
+                    onBack = { showDisconnectConfirmation = false },
+                    onDisconnect = {
+                        LibbyConnectCoordinator.disconnect()
+                        loans = emptyList()
+                        activeLoan = null
+                        lastActiveLoanUrl = ""
+                        state = PlayerState()
+                        showDisconnectConfirmation = false
+                        showLibbySource = false
+                        showSettings = false
+                        showBooks = true
+                    },
+                    onCancel = { showDisconnectConfirmation = false },
+                )
+            }
+
+            showLibbySource -> {
+                LibbySourceScreen(
+                    connected = sessionReady,
+                    onBack = { showLibbySource = false },
+                    onConnect = {
+                        showLibbyConnect = true
+                        LibbyConnectCoordinator.startConnection()
+                    },
+                    onDisconnect = { showDisconnectConfirmation = true },
+                )
             }
 
             showSettings -> {
                 SettingsScreen(
                     onBack = { showSettings = false },
-                    onOpenLibby = {
-                        showSettings = false
-                        revealLibby = true
-                    },
+                    onOpenLibby = { showLibbySource = true },
                 )
             }
 
@@ -159,21 +195,10 @@ fun PlayerDebugScreen() {
     }
 
     LaunchedEffect(Unit) {
+        LibbyConnectCoordinator.refreshSessionState()
         while (true) {
             val webView = LibbyWebPlayer.requireWebView()
             currentUrl = webView.url.orEmpty()
-
-            LibbyWebPlayer.checkIsLoggedIn { ready ->
-                if (ready && !sessionReady) {
-                    sessionReady = true
-                    showBooks = !currentUrl.contains("/open/loan/")
-                    if (!currentUrl.contains("/open/loan/")) {
-                        booksLoading = true
-                        booksMessage = "Loading books…"
-                        LibbyWebPlayer.loadLibraryPage()
-                    }
-                }
-            }
 
             if (currentUrl != lastBridgeUrl) {
                 lastBridgeUrl = currentUrl
@@ -205,7 +230,20 @@ fun PlayerDebugScreen() {
         }
     }
 
-    LaunchedEffect(showBooks) {
+    LaunchedEffect(connectState) {
+        if (connectState is LibbyConnectState.Connected) {
+            delay(500)
+            showLibbyConnect = false
+            showLibbySource = false
+            showSettings = false
+            showBooks = true
+            booksLoading = true
+            booksMessage = "Loading books…"
+            LibbyWebPlayer.loadLibraryPage()
+        }
+    }
+
+    LaunchedEffect(showBooks, sessionReady) {
         if (!showBooks || !sessionReady) return@LaunchedEffect
 
         // Keep an active loan page mounted so playback continues behind Books.
@@ -258,20 +296,6 @@ private fun BardSurface(content: @Composable () -> Unit) {
         ) {
             content()
         }
-    }
-}
-
-@Composable
-private fun LibbyRecoveryBar(
-    onDone: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    LightTheme {
-        LightTopBar(
-            center = LightTopBarCenter.Text("Libby"),
-            rightButton = LightBarButton.Text("Done", onClick = onDone),
-            modifier = modifier.background(LightThemeTokens.colors.background),
-        )
     }
 }
 
@@ -698,6 +722,188 @@ private fun SpeedPicker(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun LibbySourceScreen(
+    connected: Boolean,
+    onBack: () -> Unit,
+    onConnect: () -> Unit,
+    onDisconnect: () -> Unit,
+) {
+    BardSurface {
+        Column(modifier = Modifier.fillMaxSize()) {
+            LightTopBar(
+                leftButton = LightBarButton.LightIcon(
+                    icon = LightIcons.BACK,
+                    onClick = onBack,
+                    contentDescription = "Back to Settings",
+                ),
+                center = LightTopBarCenter.Text("Libby"),
+            )
+            LightScrollView(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(start = 1.5f.gridUnitsAsDp()),
+            ) {
+                Spacer(Modifier.height(1f.gridUnitsAsDp()))
+                if (connected) {
+                    SourceTextRow("Connected")
+                    SettingsRow(title = "Disconnect", onClick = onDisconnect)
+                } else {
+                    SettingsRow(title = "Connect to Libby", onClick = onConnect)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LibbyConnectScreen(
+    state: LibbyConnectState,
+    onBack: () -> Unit,
+    onNewCode: () -> Unit,
+    onRetry: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    val view = LocalView.current
+    val keepAwake = state is LibbyConnectState.Code
+    DisposableEffect(view, keepAwake) {
+        val previous = view.keepScreenOn
+        if (keepAwake) view.keepScreenOn = true
+        onDispose { view.keepScreenOn = previous }
+    }
+
+    BardSurface {
+        Column(modifier = Modifier.fillMaxSize()) {
+            LightTopBar(
+                leftButton = LightBarButton.LightIcon(
+                    icon = LightIcons.BACK,
+                    onClick = onBack,
+                    contentDescription = "Back to Libby settings",
+                ),
+                center = LightTopBarCenter.Text("Connect to Libby"),
+            )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(horizontal = 1.5f.gridUnitsAsDp()),
+            ) {
+                Spacer(Modifier.height(1.5f.gridUnitsAsDp()))
+                when (state) {
+                    LibbyConnectState.Idle,
+                    LibbyConnectState.Loading -> {
+                        LightText(
+                            text = "Preparing code…",
+                            variant = LightTextVariant.Paragraph,
+                            lighten = true,
+                        )
+                    }
+
+                    is LibbyConnectState.Code -> {
+                        LightText(
+                            text = "On your other device:",
+                            variant = LightTextVariant.Detail,
+                        )
+                        Spacer(Modifier.height(0.5f.gridUnitsAsDp()))
+                        LightText(
+                            text = "Menu → Copy To Another Device",
+                            variant = LightTextVariant.Paragraph,
+                        )
+                        Spacer(Modifier.height(2f.gridUnitsAsDp()))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            state.digits.forEach { digit ->
+                                LightText(
+                                    text = digit.toString(),
+                                    variant = LightTextVariant.Heading,
+                                    monospace = true,
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(1f.gridUnitsAsDp()))
+                        LightText(
+                            text = "${state.secondsRemaining} seconds remaining",
+                            variant = LightTextVariant.Detail,
+                            lighten = true,
+                        )
+                    }
+
+                    LibbyConnectState.Expired -> {
+                        LightText(text = "Code expired", variant = LightTextVariant.Heading)
+                        Spacer(Modifier.height(1f.gridUnitsAsDp()))
+                        SettingsRow(title = "New Code", onClick = onNewCode)
+                    }
+
+                    LibbyConnectState.Connected -> {
+                        LightText(text = "Connected", variant = LightTextVariant.Heading)
+                    }
+
+                    is LibbyConnectState.Error -> {
+                        LightText(
+                            text = state.userMessage,
+                            variant = LightTextVariant.Paragraph,
+                        )
+                        Spacer(Modifier.height(1f.gridUnitsAsDp()))
+                        SettingsRow(title = "Retry", onClick = onRetry)
+                        SettingsRow(title = "Cancel", onClick = onCancel)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DisconnectLibbyScreen(
+    onBack: () -> Unit,
+    onDisconnect: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    BardSurface {
+        Column(modifier = Modifier.fillMaxSize()) {
+            LightTopBar(
+                leftButton = LightBarButton.LightIcon(
+                    icon = LightIcons.BACK,
+                    onClick = onBack,
+                    contentDescription = "Back to Libby settings",
+                ),
+                center = LightTopBarCenter.Text("Disconnect Libby"),
+            )
+            LightScrollView(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(start = 1.5f.gridUnitsAsDp()),
+            ) {
+                Spacer(Modifier.height(1f.gridUnitsAsDp()))
+                LightText(
+                    text = "Disconnect Libby from Bard?",
+                    variant = LightTextVariant.Paragraph,
+                    modifier = Modifier.padding(end = 1.5f.gridUnitsAsDp()),
+                )
+                Spacer(Modifier.height(1f.gridUnitsAsDp()))
+                SettingsRow(title = "Disconnect", onClick = onDisconnect)
+                SettingsRow(title = "Cancel", onClick = onCancel)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SourceTextRow(title: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(5.5f.gridUnitsAsDp()),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        LightText(text = title, variant = LightTextVariant.Heading)
     }
 }
 
