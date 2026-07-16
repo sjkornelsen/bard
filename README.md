@@ -2,33 +2,9 @@
 
 A minimalist audiobook player for Light Phone III.
 
-Bard combines borrowed and owned audiobooks into a single, distraction-free library while preserving the simple, text-first design language of Light OS.
+Bard is designed around the philosophy of Light OS: a calm, text-first interface focused on listening instead of browsing.
 
-Current supported sources:
-
-- Libby
-- Local MP3 audiobooks
-- Local M4B audiobooks
-
----
-
-## Philosophy
-
-Bard is designed around the same principles as the Light Phone:
-
-- Text-first interface
-- No cover art
-- No recommendations
-- No storefront
-- No feeds
-- No unnecessary settings
-- Fast, calm, and predictable
-
-Your library is simply a list of books.
-
-Tap one.
-
-Listen.
+It combines library loans and personal audiobooks into a single, distraction-free bookshelf while preserving a native Light Phone experience.
 
 ---
 
@@ -36,24 +12,27 @@ Listen.
 
 ### Library
 
-- Native Light-style bookshelf
-- Unified library across multiple sources
+- Unified audiobook library
+- Library loans
+- Local MP3 audiobooks
+- Local M4B audiobooks
 - Books sorted by most recently opened
-- Remembers reading progress
-- Persistent "Now Playing"
+- Remembers listening progress
+- Persistent Now Playing
 
-### Libby
+### Player
 
-- Native Connect to Libby using the 8-digit setup code
-- Hidden Libby WebView
-- Native browsing and playback UI
-- Automatic shelf synchronization
-- Persistent login
+- Native Light-style interface
+- Scrubbable progress bar
+- ±15 second skip
+- Variable playback speed
+- Resume from last position
 - Background playback
+- Shared player for all supported sources
 
 ### Local Books
 
-Place audiobook files inside:
+Place audiobook files directly into:
 
 ```
 Light Phone III/Audiobooks
@@ -64,24 +43,22 @@ Supported formats:
 - MP3
 - M4B
 
-Features:
-
-- Automatic scanning
-- Metadata extraction
-- Persistent listening progress
-- Background playback
-
 ---
 
-## Player
+## Philosophy
 
-- Native Light-style player
-- Scrubbable progress bar
-- ±15 second skip
-- Variable playback speed
-- Resume from last position
-- Remembers playback speed
-- Works with both Libby and local books
+Bard intentionally avoids the conventions of modern media apps.
+
+There are:
+
+- No cover art
+- No recommendations
+- No storefront
+- No feeds
+- No notifications
+- No unnecessary settings
+
+Just your books.
 
 ---
 
@@ -93,12 +70,12 @@ It is already suitable for daily use, but bugs and breaking changes should be ex
 
 ---
 
-## Planned Features
+## Planned
 
 - RSS audiobook feeds
 - Multi-file audiobook folders
-- Improved library management
 - Additional playback polish
+- Expanded audiobook sources
 
 ---
 
@@ -109,9 +86,8 @@ Requirements:
 - Android Studio
 - JDK 21
 - Android SDK
-- Light Phone III SDK (for Light UI components)
 
-Clone the repository:
+Clone:
 
 ```bash
 git clone https://github.com/sjkornelsen/bard.git
@@ -127,11 +103,9 @@ Build:
 
 ## Contributing
 
-Bard is currently a personal project and is evolving quickly.
+Bug reports are welcome.
 
-Bug reports are always welcome.
-
-When reporting an issue, please include:
+Please include:
 
 - Bard version
 - Light Phone III software version
@@ -141,14 +115,20 @@ When reporting an issue, please include:
 
 ---
 
-## Disclaimer
+## Important
 
-Bard is an independent project.
+Bard is an independent, unofficial project.
 
-It is not affiliated with, endorsed by, or sponsored by:
+Bard currently supports accessing library loans through Libby using a user's own authorized library account. It does not bypass DRM, redistribute library content, proxy Libby traffic, or provide access to books a user has not legitimately borrowed.
 
-- Light
-- OverDrive
-- Libby
+Bard is not affiliated with, endorsed by, sponsored by, or supported by Light, OverDrive, or Libby.
 
-Libby is a trademark of OverDrive, Inc.
+Users are responsible for complying with the terms governing any third-party services they choose to use with Bard. OverDrive's terms place restrictions on reverse engineering, modifying, and creating derivative software around its services and software.:contentReference[oaicite:0]{index=0}
+
+Libby is a trademark of OverDrive, Inc. All other trademarks belong to their respective owners.
+
+---
+
+## License
+
+MIT License
