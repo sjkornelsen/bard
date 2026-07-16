@@ -8,7 +8,7 @@
         android:name=".LibbyLightApplication"
         android:allowBackup="false"
         android:icon="@android:mipmap/sym_def_app_icon"
-        android:label="LibbyLight"
+        android:label="Bard"
         android:theme="@android:style/Theme.Black.NoTitleBar"
         android:hardwareAccelerated="true">
 

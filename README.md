@@ -1,6 +1,8 @@
-# LibbyLight
+# Bard
 
-Step-1 prototype of a Light Phone-styled Libby client.
+Bard is a minimalist, Light Phone-styled audiobook app. This prototype uses
+Libby as its current audiobook source while preserving a native, text-only
+library and player experience.
 
 This build intentionally shows Libby's real web app in one application-scoped
 persistent Android WebView. It enables JavaScript, DOM storage, cookies, and
@@ -9,7 +11,7 @@ seconds.
 
 ## Test
 
-1. Install and open LibbyLight.
+1. Install and open Bard.
 2. Complete Libby setup/sign-in in the visible WebView.
 3. Open an audiobook loan and start playback.
 4. Press Home and confirm playback continues.
