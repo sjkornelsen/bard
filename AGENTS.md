@@ -1,103 +1,296 @@
 # Bard Repository Guide
 
-## Product Direction
+## Vision
 
-Bard is a minimalist, text-only audiobook player for Light Phone.
+Bard is a minimalist audiobook player designed for the Light Phone.
 
-- Do not display or introduce cover art.
-- Local audiobook files are the primary source.
-- Libby is an optional source configured in Settings.
-- RSS feeds are optional sources configured in Settings.
-- Present books from every enabled source together in one unified Books screen.
-- Use one shared native player UI regardless of the active source.
-- Keep the interface focused, readable, and appropriate for a small monochrome-style display.
+Its purpose is simple:
 
-## Current Architecture
+**Help people listen to stories.**
 
-This repository is currently a single-module Kotlin Android application using Jetpack Compose. It is an early Libby-focused prototype rather than the final source-independent architecture.
+Bard is not trying to recreate Libby.
+It is not trying to become a podcast app, ebook reader, media player, or library management application.
 
-- `LibbyLightApplication` initializes the application-scoped Libby WebView.
-- `LibbyWebPlayer` owns one persistent WebView, its cookies and DOM storage, Libby navigation, login-state detection, and shelf scraping.
-- `LibbyBridge` injects JavaScript into Libby/OverDrive player frames and communicates through `JavaScriptReplyProxy`.
-- `PlayerDebugScreen` currently combines prototype navigation, Libby shelf presentation, WebView synchronization, and native playback controls.
-- `LoanItem` and `PlayerState` are prototype Libby-oriented models.
-- The `ui` package contains Light-style Compose primitives that are not yet consistently used by the active screen.
+Everything in this repository should support a calm, distraction-free listening experience.
 
-There is not yet a local-file source, RSS source, database, repository layer, playback service, MediaSession, or source-independent player abstraction.
+---
 
-## Architectural Direction
+# Product Philosophy
 
-Evolve toward source-independent domain boundaries without rewriting the working Libby integration prematurely.
+Every feature should make Bard simpler.
 
-- Model books with stable, source-qualified identities.
-- Define source-neutral library and playback models for native UI consumption.
-- Keep local, Libby, and RSS behavior behind source-specific adapters.
-- Treat the local folder as the default and primary library provider.
-- Merge enabled sources at the repository/domain layer, not independently in the UI.
-- Keep source-specific setup, authentication, refresh, and error handling in Settings or source adapters.
-- Keep the Books and Player screens unaware of WebView, RSS, and filesystem implementation details.
-- Introduce abstractions only when required by an implemented feature; avoid speculative layers and unnecessary dependencies.
+Whenever multiple solutions are technically correct, prefer the one that:
 
-For eventual playback architecture, use a shared native player contract with source-specific engines:
+- requires fewer taps
+- introduces less UI
+- uses fewer dependencies
+- has fewer moving parts
+- is easier to maintain
+- feels more like the Light Phone
 
-- Local and RSS playback may use an appropriate native Android media engine.
-- Libby playback must continue to be owned by its persistent hidden WebView.
-- The common native UI should project state and send commands through the active engine.
+Never optimize for feature count.
 
-## Libby Integration Invariants
+Always optimize for calmness.
 
-Preserve the existing hidden Libby playback architecture unless a task explicitly requires a carefully scoped change.
+When in doubt, leave it out.
 
-- Retain the application-scoped persistent `LibbyWebPlayer` WebView and its session storage.
-- Retain document-start injection into the cross-origin Libby/OverDrive audiobook frame.
-- Retain the WebMessage listener and reply-proxy communication model.
-- Retain direct `BIF.objects.spool` playback controls, including `toggle`, `seekBy`, and `_setPlaybackRate`.
-- Preserve the existing DOM-button fallbacks where present.
-- Do not replace Libby playback with direct media URL extraction, downloading, proxying, or reimplementation.
-- Do not expose the Libby WebView during normal Books or Player use. It may be shown for setup, authentication, consent, diagnostics, or recovery.
-- Keep user-facing Libby language source-specific; the application itself is named Bard.
-- Treat Libby DOM selectors, routes, ARIA labels, and private BIF methods as a fragile adapter boundary. Contain compatibility work there.
+---
 
-Changes to bridge origins, injected script timing, WebView lifetime, context attachment, cookies, DOM storage, frame selection, or route invalidation are playback-sensitive and require focused verification.
+# User Experience
 
-## Naming and Dependencies
+The application consists of three primary experiences:
 
-- Do not rename existing package names, the application ID, or Kotlin classes yet.
-- User-facing application text should say Bard; internal legacy identifiers may remain until a dedicated migration.
-- Do not add a dependency when Android or the existing dependency set can reasonably support the feature.
-- When a dependency is necessary, keep it narrowly scoped and explain why it is needed.
-- Avoid broad framework adoption solely to reorganize the prototype.
+- Books
+- Player
+- Settings
 
-## Privacy and Security
+Books from every enabled source appear together in one unified library.
 
-Never log, persist in diagnostics, expose in UI error details, or include in test fixtures:
+The user should not need to think about where a book came from.
 
-- Credentials or passwords
-- Cookies or cookie headers
-- Libby setup or verification codes
-- Authentication or refresh tokens
-- Signed, expiring, or authenticated media URLs
-- Authorization headers
-- Session storage or local-storage contents
-- Personally identifying library account data
+Source-specific configuration belongs only in Settings.
 
-Sanitize URLs before logging when they may contain query parameters, fragments, signatures, or tokens. Prefer route names, hostnames, opaque internal IDs, and boolean status fields over raw payloads. Do not add JavaScript diagnostics that dump browser storage, network requests, or authentication state.
+The player should be identical regardless of source.
 
-Keep bridge origin allowlists as narrow as functionality permits. Do not enable additional WebView capabilities without a concrete requirement and security review.
+---
 
-## UI Rules
+# Sources
 
-- UI is text-only; do not fetch, cache, render, or reserve layout space for cover art.
-- Prefer the existing Light-style Compose primitives where they fit the intended interaction.
-- Keep navigation shallow and controls usable on a small portrait display.
-- Do not fork player presentation by source. Source-specific status or recovery actions may be shown without creating separate player screens.
-- Ensure optional sources do not block local-library use when disconnected, expired, offline, or malformed.
+Bard currently supports or intends to support:
 
-## Change Discipline
+- Local audiobook folder (primary)
+- Libby (optional)
+- RSS feeds (optional)
 
-- Inspect relevant call sites before changing WebView, bridge, library, or playback behavior.
-- Keep changes scoped to the requested feature and preserve unrelated work in the working tree.
-- Do not commit unless explicitly asked.
-- Add tests around source normalization, unified-library merging, playback contracts, and Libby message parsing as those boundaries are introduced.
-- For Libby changes, verify login/session persistence, shelf discovery, loan opening, play/pause, 15-second seeking, speed selection, Activity recreation, and background playback as applicable.
-- Run the narrowest relevant checks during development and `./gradlew assembleDebug` before handing off an application-code change when the environment permits.
+Local audiobooks are the primary source.
+
+Libby and RSS extend the library—they should never define the application's architecture.
+
+---
+
+# Light Design Language
+
+Bard should feel like a native Light Phone application.
+
+It should never feel like a standard Android application wearing a Light Phone skin.
+
+When implementing UI:
+
+## Typography
+
+- Prefer the existing Light SDK typography primitives.
+- Use `LightText` with the appropriate `LightTextVariant`.
+- Do not create custom typography scales.
+- Avoid decorative typography.
+- Create hierarchy through existing text variants rather than custom styles.
+
+## Layout
+
+- Use the Light grid system (`gridUnitsAsDp`) for spacing.
+- Prefer generous whitespace.
+- Maintain a consistent vertical rhythm.
+- Keep layouts simple and easy to scan.
+- Prefer scrolling over dense information.
+
+## Components
+
+- Prefer existing Light SDK components whenever possible.
+- Extend existing Bard or Light components before creating new ones.
+- Use `lightClickable` where appropriate.
+- Avoid unnecessary custom controls.
+
+## Color
+
+- Use the existing Light theme.
+- Do not hardcode colors.
+- Do not introduce accent colors.
+- Avoid decorative borders, gradients, and shadows.
+
+## Motion
+
+- Motion should communicate state only.
+- Avoid unnecessary animations.
+- Fast interactions are preferred over elaborate transitions.
+
+## Information Hierarchy
+
+Display only information that helps the user choose a book or continue listening.
+
+Avoid metadata that does not directly improve the listening experience.
+
+Hierarchy should come from typography and whitespace rather than decoration.
+
+## Whitespace
+
+Whitespace is a design element.
+
+Do not fill empty space unnecessarily.
+
+A screen with fewer elements is often the better screen.
+
+## Consistency
+
+Identical actions should always look identical.
+
+Maintain consistent spacing, typography, navigation, and interaction patterns throughout the application.
+
+## Restraint
+
+Every feature increases complexity.
+
+Before implementing any feature, ask:
+
+- Does this solve a real listening problem?
+- Can this require fewer taps?
+- Can it use less UI?
+- Is it consistent with the Light Phone philosophy?
+
+If the answer is uncertain, prefer not to implement the feature.
+
+---
+
+# Current Architecture
+
+This repository is currently a single-module Kotlin Android application using Jetpack Compose.
+
+The existing Libby integration is working and should be preserved while the rest of the application evolves around it.
+
+Current major components:
+
+- `LibbyLightApplication`
+- `LibbyWebPlayer`
+- `LibbyBridge`
+- `PlayerDebugScreen`
+- `LoanItem`
+- `PlayerState`
+
+The UI package already contains reusable Light-style Compose components.
+
+Future work should migrate toward those components rather than creating parallel UI systems.
+
+---
+
+# Architectural Direction
+
+The application should evolve toward source-independent domain models.
+
+Introduce abstractions only when they support an implemented feature.
+
+Avoid speculative architecture.
+
+Preferred future concepts include:
+
+- Audiobook
+- AudiobookId
+- AudiobookSource
+- PlaybackController
+- LibraryRepository
+
+The UI should consume these abstractions rather than interacting directly with Libby, RSS, or filesystem code.
+
+---
+
+# Libby Integration
+
+The current hidden Libby playback architecture is the project's greatest technical asset.
+
+Preserve it.
+
+Specifically:
+
+- Maintain the application-scoped persistent WebView.
+- Preserve document-start JavaScript injection.
+- Preserve the WebMessage bridge.
+- Preserve direct `BIF.objects.spool` playback control.
+- Preserve DOM fallbacks where necessary.
+- Do not replace Libby playback with direct media extraction.
+- Do not expose the Libby interface during normal operation.
+
+The Libby WebView should only become visible for:
+
+- initial setup
+- account restoration
+- authentication
+- diagnostics
+- recovery
+
+Libby should become one playback source rather than the application's architecture.
+
+---
+
+# Naming
+
+User-facing text should refer to the application as **Bard**.
+
+Internal package names and legacy identifiers may remain until a dedicated migration.
+
+Avoid unnecessary renaming of working code.
+
+---
+
+# Dependencies
+
+Prefer the existing Android SDK and Light SDK.
+
+Do not introduce third-party libraries unless there is a clear technical justification.
+
+Smaller dependency graphs are preferred.
+
+---
+
+# Privacy
+
+Never log or expose:
+
+- passwords
+- cookies
+- authentication tokens
+- Libby setup codes
+- signed URLs
+- authorization headers
+- personally identifying library information
+
+Sanitize URLs before logging.
+
+Never dump browser storage or session contents.
+
+---
+
+# Change Discipline
+
+Before modifying playback:
+
+- inspect existing call sites
+- preserve current behavior
+- keep changes narrowly scoped
+
+Do not rewrite working systems without explicit instruction.
+
+Keep every change incremental.
+
+Do not commit unless explicitly requested.
+
+When possible:
+
+- run `./gradlew assembleDebug`
+- preserve a clean working tree
+- verify Libby playback before handing work back
+
+---
+
+# Decision Rule
+
+When several solutions are technically correct:
+
+Choose the solution that is:
+
+- simpler
+- smaller
+- calmer
+- easier to understand
+- easier to maintain
+- more consistent with the Light Phone philosophy
+
+The interface should disappear.
+
+The user's attention should remain on the story, not on the application.
