@@ -35,6 +35,16 @@ object LightIcons {
         darkModeResource = R.drawable.ic_fast_forward_white,
         lightModeResource = R.drawable.ic_fast_forward_black
     )
+    object SKIP_BACKWARD_FIFTEEN : LightIconConfiguration(
+        name = "skip-backward-fifteen",
+        darkModeResource = R.drawable.ic_skip_backward_fifteen_white,
+        lightModeResource = R.drawable.ic_skip_backward_fifteen_white
+    )
+    object SKIP_FORWARD_FIFTEEN : LightIconConfiguration(
+        name = "skip-forward-fifteen",
+        darkModeResource = R.drawable.ic_skip_forward_fifteen_white,
+        lightModeResource = R.drawable.ic_skip_forward_fifteen_white
+    )
     object BACK : LightIconConfiguration(
         name = "back",
         darkModeResource = R.drawable.ic_back_white,
@@ -49,6 +59,11 @@ object LightIcons {
         name = "close",
         darkModeResource = R.drawable.ic_close_white,
         lightModeResource = R.drawable.ic_close_black
+    )
+    object SETTINGS : LightIconConfiguration(
+        name = "settings",
+        darkModeResource = R.drawable.ic_settings_white,
+        lightModeResource = R.drawable.ic_settings_white
     )
     /** Invisible spacer -- used by LightTopBar/LightBarButton to keep
      *  layout balanced when a button slot is empty. */

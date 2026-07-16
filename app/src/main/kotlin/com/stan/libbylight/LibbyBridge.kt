@@ -327,6 +327,32 @@ object LibbyBridge {
             }
           };
 
+          const seekTo = (positionMilliseconds) => {
+            const spool = getSpool();
+            const requested = Number(positionMilliseconds);
+            if (!spool || !Number.isFinite(requested)) return false;
+
+            // The native UI speaks in absolute book milliseconds. Libby's
+            // seekWithinBook maps that value across spool.components/focus.
+            const timelineDuration = getTimes().total * 1000;
+            const target = Math.max(
+              0,
+              timelineDuration > 0
+                ? Math.min(requested, timelineDuration)
+                : requested
+            );
+
+            if (typeof spool.seekWithinBook === 'function') {
+              spool.seekWithinBook(target);
+              return true;
+            }
+            if (typeof spool.seek === 'function') {
+              spool.seek(target);
+              return true;
+            }
+            return false;
+          };
+
           nativeBridge.onmessage = (event) => {
             let request;
             try { request = JSON.parse(event.data); }
@@ -391,6 +417,10 @@ object LibbyBridge {
                   }
                   break;
                 }
+
+                case 'seekTo':
+                  result = seekTo(request.positionMilliseconds);
+                  break;
 
                 case 'setSpeed':
                   result = setSpeed(request.speed);
@@ -484,6 +514,14 @@ object LibbyBridge {
     fun pause() = command("pause")
     fun forward15() = command("forward15")
     fun back15() = command("back15")
+
+    /** Seeks to an absolute position in the book without exposing Libby internals to the UI. */
+    fun seekTo(positionMilliseconds: Long) {
+        command(
+            "seekTo",
+            JSONObject().put("positionMilliseconds", positionMilliseconds.coerceAtLeast(0)),
+        )
+    }
 
     fun setSpeed(speed: Double) {
         command("setSpeed", JSONObject().put("speed", speed))

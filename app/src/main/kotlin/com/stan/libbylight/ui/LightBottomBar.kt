@@ -28,6 +28,7 @@ private val BOTTOMBAR_TEXT_VARIANT = LightTextVariant.Button
 fun LightBottomBar(
     items: List<LightBottomBarItem?>,
     modifier: Modifier = Modifier,
+    horizontalPaddingUnits: Float? = null,
 ) {
     require(items.size <= 5) { "LightBottomBar supports at most 5 items" }
 
@@ -37,7 +38,7 @@ fun LightBottomBar(
     }
 
     val barHeight = BOTTOMBAR_HEIGHT_UNITS.gridUnitsAsDp()
-    val horizontalPadding = when (items.size) {
+    val horizontalPadding = horizontalPaddingUnits?.gridUnitsAsDp() ?: when (items.size) {
         0, 1 -> 0f.gridUnitsAsDp()
         else -> HORIZONTAL_PADDING_MULTI_UNITS.gridUnitsAsDp()
     }
@@ -143,4 +144,3 @@ private fun isMixedIconTextIconLayout(items: List<LightBottomBarItem?>): Boolean
 
     return firstIsIconOrEmpty && centerIsText && lastIsIconOrEmpty
 }
-
