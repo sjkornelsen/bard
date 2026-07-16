@@ -76,6 +76,7 @@ It is already suitable for daily use, but bugs and breaking changes should be ex
 - Multi-file audiobook folders
 - Additional playback polish
 - Expanded audiobook sources
+- Chapter support where available
 
 ---
 
