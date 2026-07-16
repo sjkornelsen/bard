@@ -22,6 +22,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,6 +69,7 @@ fun PlayerDebugScreen() {
     val connectState by LibbyConnectCoordinator.connectState.collectAsState()
     val libbySessionState by LibbyConnectCoordinator.sessionState.collectAsState()
     val sessionReady = libbySessionState == LibbySessionState.Connected
+    val currentSessionReady by rememberUpdatedState(sessionReady)
     var showBooks by remember { mutableStateOf(true) }
     var showSettings by remember { mutableStateOf(false) }
     var showLibbySource by remember { mutableStateOf(false) }
@@ -212,11 +214,11 @@ fun PlayerDebugScreen() {
                 }
             }
 
-            if (sessionReady && currentUrl.contains("/open/loan/")) {
+            if (currentSessionReady && currentUrl.contains("/open/loan/")) {
                 LibbyBridge.getPlayerState { newState -> state = newState }
             }
 
-            if (sessionReady && currentUrl.contains("/shelf")) {
+            if (currentSessionReady && currentUrl.contains("/shelf")) {
                 LibbyWebPlayer.scrapeAudiobookLoans { found ->
                     if (found.isNotEmpty()) {
                         loans = found
