@@ -3,6 +3,7 @@ package com.stan.libbylight
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.MutableContextWrapper
+import android.content.pm.ApplicationInfo
 import android.util.Log
 import android.view.ViewGroup
 import android.webkit.CookieManager
@@ -10,9 +11,11 @@ import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.WebStorage
 import org.json.JSONArray
 import org.json.JSONObject
 import com.stan.libbylight.library.LoanItem
+import kotlin.coroutines.resume
 
 private const val TAG = "LibbyWebPlayer"
 private const val LIBBY_ROOT = "https://libbyapp.com/"
@@ -21,9 +24,8 @@ private const val LIBBY_SHELF = "https://libbyapp.com/shelf"
 /**
  * Application-scoped Libby browser session.
  *
- * Step 1 intentionally exposes Libby's real UI. Later steps can add a
- * JavaScript bridge and native Light-style shelf/player screens without
- * replacing this persistent WebView or its cookies/local storage.
+ * Bard keeps this WebView mounted behind its native Light-style UI so Libby's
+ * session and playback remain persistent without exposing Libby's interface.
  */
 object LibbyWebPlayer {
 
@@ -39,7 +41,8 @@ object LibbyWebPlayer {
         cookies.setAcceptCookie(true)
 
         val contextWrapper = MutableContextWrapper(context.applicationContext)
-        WebView.setWebContentsDebuggingEnabled(true)
+        val isDebugBuild = context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
+        WebView.setWebContentsDebuggingEnabled(isDebugBuild)
 
         webView = WebView(contextWrapper).apply {
             settings.javaScriptEnabled = true
@@ -63,17 +66,14 @@ object LibbyWebPlayer {
 
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView, url: String) {
-                    Log.d(TAG, "onPageFinished: $url")
+                    Log.d(TAG, "onPageFinished: ${safeRouteName(url)}")
                     CookieManager.getInstance().flush()
                 }
             }
             webChromeClient = object : WebChromeClient() {
                 override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
-                    Log.d(
-                        TAG,
-                        "JS ${consoleMessage.messageLevel()}: ${consoleMessage.message()} " +
-                            "(${consoleMessage.sourceId()}:${consoleMessage.lineNumber()})"
-                    )
+                    // Do not forward Libby's console text or source URLs to Logcat; they may
+                    // contain authentication or setup details.
                     return true
                 }
             }
@@ -103,6 +103,42 @@ object LibbyWebPlayer {
 
     fun loadLoginPage() {
         requireWebView().loadUrl(LIBBY_ROOT)
+    }
+
+    /** Clears only this app's local WebView-backed Libby session. */
+    fun clearLocalLibbySession(onComplete: () -> Unit) {
+        val current = requireWebView()
+        val clearPageStorage = """
+            (() => {
+              try { localStorage.clear(); } catch (_) {}
+              try { sessionStorage.clear(); } catch (_) {}
+              try {
+                if (window.caches) {
+                  caches.keys().then(keys => keys.forEach(key => caches.delete(key)));
+                }
+              } catch (_) {}
+              try {
+                if (indexedDB.databases) {
+                  indexedDB.databases().then(databases => databases.forEach(database => {
+                    if (database.name) indexedDB.deleteDatabase(database.name);
+                  }));
+                }
+              } catch (_) {}
+              return true;
+            })();
+        """.trimIndent()
+
+        current.evaluateJavascript(clearPageStorage) {
+            WebStorage.getInstance().deleteAllData()
+            current.clearCache(true)
+            current.clearHistory()
+            current.clearFormData()
+            CookieManager.getInstance().removeAllCookies {
+                CookieManager.getInstance().flush()
+                current.loadUrl(LIBBY_ROOT)
+                onComplete()
+            }
+        }
     }
 
     fun loadLibraryPage() {
@@ -196,8 +232,8 @@ object LibbyWebPlayer {
     /**
      * Libby does not expose a single stable login cookie. For this prototype,
      * reaching a normal Libby app route after initial setup counts as an
-     * authenticated/initialized session. The actual page remains visible, so
-     * the user can finish any card or verification step normally.
+     * authenticated/initialized session. The page remains hidden behind Bard's
+     * native UI during connection and playback.
      */
     fun checkIsLoggedIn(onResult: (Boolean) -> Unit) {
         val script = """
@@ -217,7 +253,7 @@ object LibbyWebPlayer {
                 val url = json.optString("url")
                 val initialized = json.optBoolean("ready") &&
                     (json.optBoolean("realm") || url.contains("/shelf") || url.contains("/open/loan/"))
-                Log.d(TAG, "checkIsLoggedIn: url=$url initialized=$initialized")
+                Log.d(TAG, "checkIsLoggedIn: route=${safeRouteName(url)} initialized=$initialized")
                 onResult(initialized)
             } catch (error: Exception) {
                 Log.e(TAG, "checkIsLoggedIn failed", error)
@@ -227,8 +263,8 @@ object LibbyWebPlayer {
     }
 
     suspend fun checkIsLoggedInSuspend(): Boolean =
-        kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
-            checkIsLoggedIn { result -> continuation.resume(result) { } }
+        kotlin.coroutines.suspendCoroutine { continuation ->
+            checkIsLoggedIn { result -> continuation.resume(result) }
         }
 
     private fun decodeJavascriptString(raw: String?): String? {
@@ -239,5 +275,12 @@ object LibbyWebPlayer {
         } catch (_: Exception) {
             raw.removeSurrounding("\"").replace("\\\"", "\"")
         }
+    }
+
+    private fun safeRouteName(url: String): String = when {
+        url.contains("/open/loan/") -> "open-loan"
+        url.contains("/shelf") -> "shelf"
+        url == LIBBY_ROOT || url.substringBefore('?') == LIBBY_ROOT -> "root"
+        else -> "libby-app"
     }
 }
