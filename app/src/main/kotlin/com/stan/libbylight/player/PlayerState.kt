@@ -2,6 +2,14 @@ package com.stan.libbylight.player
 
 import org.json.JSONObject
 
+enum class PlayerReadiness {
+    Preparing,
+    Buffering,
+    Ready,
+    Unavailable,
+    Error,
+}
+
 data class PlayerState(
     val title: String = "Libby",
     val chapter: String? = null,
@@ -12,6 +20,7 @@ data class PlayerState(
     val controlsFound: Boolean = false,
     val pageUrl: String = "",
     val diagnostic: String = "Waiting for player…",
+    val readiness: PlayerReadiness = PlayerReadiness.Preparing,
 ) {
     companion object {
         fun fromJson(json: JSONObject): PlayerState = PlayerState(
@@ -24,6 +33,11 @@ data class PlayerState(
             controlsFound = json.optBoolean("controlsFound", false),
             pageUrl = json.optString("pageUrl", ""),
             diagnostic = json.optString("diagnostic", ""),
+            readiness = if (json.optBoolean("controlsFound", false)) {
+                PlayerReadiness.Ready
+            } else {
+                PlayerReadiness.Preparing
+            },
         )
     }
 }

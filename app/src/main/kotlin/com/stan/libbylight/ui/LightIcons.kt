@@ -15,6 +15,21 @@ sealed class LightIconConfiguration(
 )
 
 object LightIcons {
+    object DOWNLOADED_ARROW : LightIconConfiguration(
+        name = "downloaded arrow",
+        darkModeResource = R.drawable.ic_downloaded_arrow_white,
+        lightModeResource = R.drawable.ic_downloaded_arrow_black,
+    )
+    object DOWNLOAD_ARROW : LightIconConfiguration(
+        name = "download arrow",
+        darkModeResource = R.drawable.ic_download_arrow_white,
+        lightModeResource = R.drawable.ic_download_arrow_black,
+    )
+    object AUDIO_MESSAGE : LightIconConfiguration(
+        name = "audio message",
+        darkModeResource = R.drawable.ic_audio_message_white,
+        lightModeResource = R.drawable.ic_audio_message_black
+    )
     object PLAY : LightIconConfiguration(
         name = "play",
         darkModeResource = R.drawable.ic_play_white,
