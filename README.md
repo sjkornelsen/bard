@@ -1,14 +1,20 @@
 # Bard
 
-  Bard is a minimalist, text-only audiobook player designed for the Light Phone III. It brings local audiobooks,
-  optional Libby loans, and optional RSS audiobooks into one calm Books screen and one consistent player
-  interface.
+*A minimalist audiobook player for the Light Phone III.*
 
-  Bard is currently private alpha software. The current application version is 0.1.0-alpha3 (versionCode 3).
+Bard is an audiobook player built specifically for the Light Phone III. It brings local audiobooks, public library loans, and optional RSS audiobook feeds into one calm, text-first interface inspired by the philosophy of Light OS.
 
-  ## What Bard Supports
+Instead of treating audiobooks as another streaming platform, Bard treats them as books. Every supported source appears together in one unified library with one consistent player, allowing you to focus on listening instead of navigating storefronts, recommendations, or media feeds.
 
-  ### Local audiobooks
+There are no recommendations, no cover art, no social features, and no storefronts—just your books.
+
+Bard is currently in **alpha**. While it is already suitable for daily use, features and behavior may continue to evolve before a stable release.
+
+> **Current Status:** Alpha
+>
+> **Current Version:** 0.1.0-alpha3 (versionCode 3)
+
+---
 
 ## Screenshots
 
@@ -25,196 +31,394 @@
 
 ---
 
-## Features
+## Highlights
 
-  Local scanning is intentionally limited to the top level of the Audiobooks folder. Bard does not scan
-  subfolders or copy local books into app-private storage.
+- Unified library for local audiobooks, public library loans, and RSS audiobook feeds
+- One consistent player across every supported source
+- Native Light-inspired interface
+- Background playback with persistent listening progress
+- Offline support for local books and downloaded RSS audiobooks
+- No cover art, recommendations, advertisements, or storefronts
 
-  ### Libby loans
+---
 
-  - Optional connection using Libby's eight-digit Copy To Another Device setup code.
-  - Native, text-only shelf and player presentation; the Libby website remains hidden during normal use.
-  - Loan progress and due-date metadata when supplied by Libby.
-  - Play/pause, ±15 seconds, absolute seeking, and playback speed through Libby's own player controls.
-  - Background playback supported by a media-playback foreground service while a Libby book is actively playing.
+## Table of Contents
 
-  Bard keeps one application-scoped WebView for the Libby session and player. It uses document-start JavaScript
-  injection, a WebMessage bridge, and Libby's own BIF.objects.spool controls. Bard does not extract protected
-  media URLs or replace Libby's playback engine.
+- Features
+- Getting Started
+- Library & Playback
+- Downloads
+- Permissions
+- Privacy & Security
+- Current Limitations
+- Architecture
+- Development
+- Roadmap
+- Contributing
+- Important
+- License
 
-  ### RSS audiobooks
+---
 
-  - One RSS item treated as one audiobook.
-  - MP3 and M4B audio enclosures.
-  - Multiple saved HTTP or HTTPS feeds.
-  - Streaming through Android's native media playback APIs.
-  - User-initiated full-file downloads for offline playback.
-  - Downloaded files stored durably in Bard's app-private storage.
-  - Manual feed refresh and removal.
+# Features
 
-  RSS downloads are never automatic. Removing an RSS download keeps the feed item and listening progress, making
-  the book streamable again. Removing a feed removes its books from the library.
+## Local Audiobooks
 
-  ## Library and Playback
+Bard supports locally stored audiobooks without requiring a cloud account or subscription.
 
-  All enabled sources appear together in one Books screen with no source tabs, cover art, or cards. Books are
-  ordered by most recently played; books that have never been played follow alphabetically.
+### Supported Formats
 
-  The same player interface is used for every source and provides:
+- MP3
+- M4B
 
-  - Play and pause.
-  - Rewind and forward 15 seconds.
-  - A scrubbable progress line.
-  - Playback speeds of 1×, 1.25×, 1.5×, 1.75×, and 2×.
-  - Persisted position, duration, speed, and last-played ordering.
-  - Now Playing restoration after app or phone restart without autoplay.
+### Features
 
-  The interface is source-independent, but playback is not one single engine: Libby uses its persistent hidden
-  WebView player, while local and RSS books use Android's native media player.
+- Manual library scanning
+- Resume playback
+- Persistent listening progress
+- Recent-first library ordering
+- Unified player interface
+- Background playback
 
-  ## Downloads
+Local scanning is intentionally limited to the top level of the shared `Audiobooks` folder. Bard does not scan subfolders or copy books into app-private storage.
 
-  The Downloads screen lists only media Bard can accurately identify as stored on the phone:
+---
 
-  - Local MP3/M4B files in the shared Audiobooks folder.
-  - Completed Bard-managed RSS downloads.
+## Public Library Loans
 
-  Libby loans are deliberately excluded because Bard does not manage or expose Libby's internal offline files.
+Bard can optionally connect to your public library audiobook loans so borrowed books appear alongside your local library.
 
-  Removing a local book from Downloads deletes the original file after Android's confirmation. Removing an RSS
-  download deletes only Bard's private downloaded copy and preserves feed metadata, listening progress, speed,
-  and ordering.
+### Features
 
-  ## Getting Started
+- Native text-only bookshelf
+- Native text-only player
+- Loan progress
+- Due-date information (when available)
+- Play / Pause
+- ±15 second skip
+- Absolute seeking
+- Variable playback speed
+- Background playback
 
-  ### Local books
+Current releases use Libby's **Copy to Another Device** connection process to authorize eligible library loans.
 
-  1. Connect the Light Phone III to a computer.
-  2. Create an Audiobooks folder at the top level of shared device storage if it does not already exist.
-  3. Place single-file .mp3 or .m4b audiobooks directly in that folder.
-  4. In Bard, open Settings → Local Books → Scan for Books.
+Bard maintains an application-scoped browser session for an authorized library account and uses the provider's official playback system. Bard does not extract protected media files, download library content outside the provider's playback system, bypass DRM or access controls, or replace the provider's playback engine.
 
-  Android may ask Bard for audio-library permission so it can discover these shared files. Bard does not request
-  broad all-files storage access.
+Support for public library loans depends on the availability and structure of the provider's web application and may require updates if that service changes.
 
-  ### Libby
+---
 
-  1. Open Settings → Libby → Connect to Libby.
-  2. On another device already connected to Libby, open Menu → Copy To Another Device.
-  3. Enter the eight-digit code displayed by Bard.
-  4. Bard returns to Books after the Libby session and shelf are ready.
+## RSS Audiobooks
 
-  Bard's native connection flow does not expose passkey recovery or library-card sign-in. Disconnect clears only
-  Bard's local Libby WebView session and does not disconnect other devices.
+Bard also supports standard RSS audiobook feeds.
 
-  ### RSS
+Each RSS item is treated as an individual audiobook and appears alongside every other supported source.
 
-  1. Open Settings → RSS Feeds → Add Feed.
-  2. Enter an HTTP or HTTPS RSS feed URL using the Light-style keyboard.
-  3. Open a book to stream it, or use Download in the player to keep it offline.
+### Features
 
-  Private feed URLs are stored in app-private preferences and are not written to logs. Username/password
-  authentication is not supported.
+- Multiple RSS feeds
+- MP3 audio enclosures
+- M4B audio enclosures
+- Streaming playback
+- Optional offline downloads
+- Manual refresh
+- Persistent listening progress
+- Recent-first ordering
 
-  ## Permissions and Notifications
+Downloads are always initiated by the user.
 
-  Bard's installed APK uses:
+Removing a downloaded audiobook deletes only Bard's private offline copy while preserving listening progress and feed metadata.
 
-  - Internet and network-state access for Libby and RSS.
-  - Audio-library read access for the fixed shared Audiobooks folder.
-  - Media-playback foreground-service access for reliable Libby screen-off playback.
-  - Vibration support supplied by the embedded Light keyboard component.
+---
 
-  While Libby audio is actively playing, Android shows a private ongoing Bard notification. The notification
-  keeps Bard's hidden WebView process active when the screen is off and is removed when Libby playback pauses or
-  stops.
+## Unified Library
 
-  ## Current Limitations
+Every supported source appears together in a single Books screen.
 
-  - Light Phone III / Android 13 or newer is the current target environment.
-  - Local books are one MP3 or M4B file each; multi-file books are unsupported.
-  - No chapter navigation or embedded-chapter UI.
-  - Bard's UI never displays cover art.
-  - RSS expects one supported audio enclosure per item.
-  - No authenticated RSS feeds, scheduled refresh, RSS notifications, or automatic downloads.
-  - RSS playback is streaming unless the user explicitly downloads the book.
-  - Libby requires another device with an authorized Libby session for setup.
-  - Libby integration depends on Libby's web application and may require maintenance when that application
-    changes.
+There are no:
 
-  - No ebook reading, cloud sync, metadata editing, or podcast-specific episode features.
+- Source tabs
+- Cover art
+- Recommendation feeds
+- Storefronts
+- Advertisements
+- Social features
 
-  ## Architecture
+Books are ordered by most recently played so the titles you're actively listening to are always easiest to reach.
 
-  Bard is a single-module Kotlin Android application built with Jetpack Compose. The current implementation is
-  intentionally incremental:
+---
 
-  - Source-neutral Audiobook and progress records feed the unified library.
-  - LocalBookRepository discovers fixed-folder local media.
-  - RssFeedRepository persists, fetches, securely parses, and caches RSS feeds.
-  - RssDownloadManager owns durable RSS offline files and download state.
-  - LocalPlaybackController handles local files and RSS streams/downloads.
-  - LibbyWebPlayer owns the persistent application-scoped WebView.
-  - LibbyBridge translates source-neutral player actions to Libby's player.
-  - AudiobookProgressStore persists playback state, last-active identity, and recent-first ordering across
-    sources.
+## Unified Player
 
-  The UI is built from Bard's Light-style Compose primitives and selected Light SDK-derived resources. It uses
-  the Light LP3 keyboard component for RSS URL entry.
+Every audiobook source shares the same player interface.
 
-  ## Development
+Features include:
 
-  Requirements:
+- Play / Pause
+- Rewind and forward 15 seconds
+- Scrubbable progress line
+- Playback speeds:
+  - 1×
+  - 1.25×
+  - 1.5×
+  - 1.75×
+  - 2×
 
-  - JDK 17.
-  - Android SDK with API 36 available.
-  - Android device or emulator running API 33 or newer.
+Bard remembers:
 
-  Build the debug APK:
+- Listening position
+- Playback speed
+- Playback duration
+- Recently played ordering
 
-  ./gradlew assembleDebug
+After restarting the application or phone, the most recently played audiobook is restored without automatically beginning playback.
 
-  The output is:
+Although the interface is identical regardless of source, playback remains source-specific. Local files and RSS audiobooks use Android's native media player, while public library loans continue using the provider's official playback system.
 
-  app/build/outputs/apk/debug/app-debug.apk
+---
 
-  Private release signing, verification, installation, and rollback instructions are documented in RELEASE.md
-  (RELEASE.md). Signing keys and keystore.properties must remain outside Git.
+# Getting Started
 
-  ## Privacy and Security
+## Local Audiobooks
 
-  Bard does not log setup codes, cookies, authentication tokens, signed media URLs, private RSS URLs, local file
-  paths, raw browser storage, or raw Libby bridge payloads. WebView debugging is enabled only in debuggable
-  builds.
+1. Connect your Light Phone III to your computer.
+2. Create an `Audiobooks` folder in shared device storage if it does not already exist.
+3. Copy single-file `.mp3` or `.m4b` audiobooks into that folder.
+4. In Bard, open:
 
-  RSS XML parsing rejects document declarations and does not execute feed HTML or JavaScript. RSS downloads are
-  stored in Bard's private files directory. Android backup is disabled for the application.
+```
+Settings → Local Books → Scan for Books
+```
 
-  ## Important
+Android may request permission to read your audio library. Bard does **not** request broad "All Files" storage access.
 
-  Bard is an independent, unofficial open-source project.
+---
 
-  Bard is not affiliated with, endorsed by, sponsored by, or approved by Light, OverDrive, or Libby.
+## Public Library Loans
 
-  Bard does not include or redistribute the Libby Android application, Libby source code, audiobook content, DRM-
-  protected media, or user credentials.
+1. Open:
 
-  When using library loans, Bard relies on the user's own authorized Libby account and the official Libby web
-  service. Bard does not provide access to books that a user has not legitimately borrowed.
+```
+Settings → Libby → Connect
+```
 
-  Bard does not bypass or remove DRM, proxy audiobook content, or host copyrighted library materials.
+2. On another device already signed into your Libby account, choose **Copy to Another Device**.
 
-  Users are responsible for ensuring that their use of Bard complies with the terms and conditions governing any
-  third-party services they choose to access through the application.
+3. Enter the setup code displayed by Bard.
 
-  "Libby" and "OverDrive" are trademarks of OverDrive, Inc. "Light" and "Light Phone" are trademarks of their
-  respective owners. All trademarks are used solely for identification and compatibility purposes and remain the
-  property of their respective owners.
+Once the authorized session has been established, Bard automatically returns to the Books screen.
 
-  ## License and Third-Party Components
+Disconnecting clears only Bard's local session and does not disconnect your other authorized devices.
 
-  Original source code written specifically for Bard is available under the MIT License (LICENSE).
+---
 
-  Bard includes Light SDK-derived user-interface components and resources. Their copyright notices and license
-  terms are reproduced in THIRD_PARTY_NOTICES.md (THIRD_PARTY_NOTICES.md). Third-party components remain subject
-  to their respective licenses.
+## RSS Audiobooks
+
+1. Open:
+
+```
+Settings → RSS Feeds → Add Feed
+```
+
+2. Enter an HTTP or HTTPS RSS feed URL.
+
+3. Stream immediately or download individual audiobooks for offline listening.
+
+Private RSS feed URLs are stored only in Bard's private application storage. Username/password authenticated feeds are not currently supported.
+
+# Current Limitations
+
+Bard is currently designed for the Light Phone III and Android 13 or newer.
+
+Current limitations include:
+
+- Local audiobooks must be single MP3 or M4B files (multi-file books are not yet supported).
+- Chapter navigation is not currently available.
+- Cover art is intentionally omitted throughout the interface.
+- RSS feeds support one audio enclosure per item.
+- Authenticated RSS feeds are not supported.
+- RSS feeds do not refresh automatically and never download content without user action.
+- Public library setup currently requires another authorized device during initial connection.
+- Public library integration depends on the provider's web application and may require updates if that service changes.
+- Ebook reading, cloud synchronization, metadata editing, and podcast-specific features are not currently supported.
+
+---
+
+# Architecture
+
+Bard is a native Android application written in Kotlin using Jetpack Compose. Rather than building separate applications for each audiobook source, Bard presents every supported source through a single library and a consistent playback experience.
+
+The application is organized around a small number of independent components:
+
+| Component | Purpose |
+|-----------|---------|
+| **Unified Library** | Combines all supported audiobook sources into a single collection. |
+| **Progress Store** | Persists playback position, playback speed, and recently played ordering. |
+| **Local Library** | Discovers and indexes audiobooks stored in the shared `Audiobooks` folder. |
+| **RSS Repository** | Retrieves, parses, and caches RSS audiobook feeds. |
+| **RSS Download Manager** | Manages offline RSS downloads stored in Bard's private application storage. |
+| **Playback Controllers** | Provide playback for local, RSS, and library sources through a unified player interface. |
+| **User Interface** | Built with Jetpack Compose using Bard's Light-inspired design language. |
+
+Although every source shares the same interface, playback remains source-specific. This allows each source to use the most appropriate playback implementation while presenting a consistent experience to the user.
+
+The interface incorporates selected resources derived from the Light SDK and uses the Light Phone keyboard component where appropriate.
+
+---
+
+# Development
+
+## Requirements
+
+- JDK 17
+- Android Studio
+- Android SDK (API 36)
+- Android device or emulator running Android 13 (API 33) or newer
+
+## Building
+
+Clone the repository:
+
+```bash
+git clone https://github.com/sjkornelsen/bard.git
+cd bard
+```
+
+Build the debug APK:
+
+```bash
+./gradlew assembleDebug
+```
+
+The generated APK can be found at:
+
+```text
+app/build/outputs/apk/debug/app-debug.apk
+```
+
+Release signing instructions are documented in `RELEASE.md`.
+
+Signing keys, keystores, and `keystore.properties` should never be committed to source control.
+
+---
+
+# Privacy & Security
+
+Bard is designed to keep your audiobook library on your device.
+
+The application:
+
+- does not include analytics or advertising;
+- does not create a Bard account;
+- does not collect telemetry;
+- does not synchronize user data with external servers;
+- stores RSS downloads only in Bard's private application storage.
+
+Release builds disable WebView debugging.
+
+Local audiobook files remain in their original location within the shared `Audiobooks` folder and are never copied into Bard's private storage.
+
+When using public library loans, authentication and media delivery continue to be handled by the provider's own systems. Bard is designed not to intentionally collect authentication credentials or protected media URLs.
+
+Android may display a foreground media playback notification while audio is playing. This notification is used solely to keep playback active while the screen is off.
+
+---
+
+# Roadmap
+
+Planned improvements include:
+
+- Multi-file audiobook support
+- Chapter navigation
+- Improved Bluetooth controls
+- Expanded RSS capabilities
+- Additional playback refinements
+- Improved download management
+- Additional audiobook sources
+- Performance and stability improvements
+
+---
+
+# Contributing
+
+Contributions, bug reports, feature requests, and suggestions are welcome.
+
+If you encounter a bug, please include:
+
+- Bard version
+- Light Phone III software version
+- Steps to reproduce
+- Expected behavior
+- Actual behavior
+
+Before opening an issue, please check whether the problem has already been reported.
+
+---
+
+# Frequently Asked Questions
+
+### Does Bard require an account?
+
+No.
+
+Local audiobooks work entirely offline and do not require an account.
+
+Public library loans require an account with a supported library lending service. RSS feeds do not require a Bard account.
+
+---
+
+### Does Bard collect analytics or usage data?
+
+No.
+
+Bard does not include analytics, advertising, telemetry, or user tracking.
+
+---
+
+### Does Bard support offline listening?
+
+Yes.
+
+Local audiobooks are always available offline. RSS audiobooks may be downloaded for offline playback. Public library loans are streamed only to respect library licensing and content restrictions.
+
+---
+
+# Important
+
+Bard is an independent, unofficial project.
+
+Bard is not affiliated with, endorsed by, sponsored by, supported by, or approved by The Light Phone, Inc., OverDrive, Inc., or any public library system.
+
+Bard does not include or redistribute the Libby Android application, source code, audiobook content, DRM-protected media, user credentials, or authentication data.
+
+Bard's optional public-library functionality requires the user's own authorized library account and uses the provider's official services for authentication and playback. Bard does not provide access to books that have not been legitimately borrowed.
+
+Bard is not designed to extract or host audiobook files, remove or bypass DRM, expose protected media URLs, or provide access to books outside the provider's authorized playback system.
+
+Compatibility with third-party services is not guaranteed and may change over time as those services evolve.
+
+Users are responsible for ensuring that their use of Bard complies with the terms governing any third-party services they choose to access through the application.
+
+Libby and OverDrive are trademarks of OverDrive, Inc.
+
+Light Phone and Light OS are trademarks of The Light Phone, Inc.
+
+Other trademarks and product names belong to their respective owners and are used solely to identify compatibility with third-party products and services.
+
+---
+
+# License
+
+Copyright © 2026 Stan Kornelsen.
+
+The original Bard source code is licensed under the MIT License.
+
+See [LICENSE](LICENSE) for the complete license text.
+
+Bard also incorporates user-interface components and resources derived from the Light SDK. Applicable copyright notices and license terms are reproduced in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+Third-party components remain subject to their own licenses. The Bard license does not grant rights to any third-party software, services, trademarks, or copyrighted content.
+
+---
+
+Built with ❤️ for the Light Phone community.
