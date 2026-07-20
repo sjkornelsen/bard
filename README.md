@@ -29,16 +29,6 @@ Bard is currently in **alpha**. While it is already suitable for daily use, feat
   </tr>
 </table>
 
----
-
-## Highlights
-
-- Unified library for local audiobooks, public library loans, and RSS audiobook feeds
-- One consistent player across every supported source
-- Native Light-inspired interface
-- Background playback with persistent listening progress
-- Offline support for local books and downloaded RSS audiobooks
-- No cover art, recommendations, advertisements, or storefronts
 
 
 ---
