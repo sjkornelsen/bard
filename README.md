@@ -40,23 +40,6 @@ Bard is currently in **alpha**. While it is already suitable for daily use, feat
 - Offline support for local books and downloaded RSS audiobooks
 - No cover art, recommendations, advertisements, or storefronts
 
----
-
-## Table of Contents
-
-- Features
-- Getting Started
-- Library & Playback
-- Downloads
-- Permissions
-- Privacy & Security
-- Current Limitations
-- Architecture
-- Development
-- Roadmap
-- Contributing
-- Important
-- License
 
 ---
 
