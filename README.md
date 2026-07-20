@@ -29,7 +29,7 @@ Bard is currently in **alpha**. While it is already suitable for daily use, feat
   </tr>
 </table>
 
-
+Regardless of source, every audiobook appears in the same library and uses the same player interface, providing a consistent listening experience throughout the application.
 
 ---
 
@@ -63,15 +63,7 @@ Bard can optionally connect to your public library audiobook loans so borrowed b
 
 ### Features
 
-- Native text-only bookshelf
-- Native text-only player
-- Loan progress
-- Due-date information (when available)
-- Play / Pause
-- ±15 second skip
-- Absolute seeking
-- Variable playback speed
-- Background playback
+- Public library loans use the same player interface and controls as every other audiobook source.
 
 Current releases use Libby's **Copy to Another Device** connection process to authorize eligible library loans.
 
@@ -89,64 +81,11 @@ Each RSS item is treated as an individual audiobook and appears alongside every 
 
 ### Features
 
-- Multiple RSS feeds
-- MP3 audio enclosures
-- M4B audio enclosures
-- Streaming playback
-- Optional offline downloads
-- Manual refresh
-- Persistent listening progress
-- Recent-first ordering
+- RSS Audiobooks use the same player interface and controls as every other audiobook source.
 
 Downloads are always initiated by the user.
 
 Removing a downloaded audiobook deletes only Bard's private offline copy while preserving listening progress and feed metadata.
-
----
-
-## Unified Library
-
-Every supported source appears together in a single Books screen.
-
-There are no:
-
-- Source tabs
-- Cover art
-- Recommendation feeds
-- Storefronts
-- Advertisements
-- Social features
-
-Books are ordered by most recently played so the titles you're actively listening to are always easiest to reach.
-
----
-
-## Unified Player
-
-Every audiobook source shares the same player interface.
-
-Features include:
-
-- Play / Pause
-- Rewind and forward 15 seconds
-- Scrubbable progress line
-- Playback speeds:
-  - 1×
-  - 1.25×
-  - 1.5×
-  - 1.75×
-  - 2×
-
-Bard remembers:
-
-- Listening position
-- Playback speed
-- Playback duration
-- Recently played ordering
-
-After restarting the application or phone, the most recently played audiobook is restored without automatically beginning playback.
-
-Although the interface is identical regardless of source, playback remains source-specific. Local files and RSS audiobooks use Android's native media player, while public library loans continue using the provider's official playback system.
 
 ---
 
@@ -236,54 +175,26 @@ Bard incorporates selected user-interface resources derived from the Light SDK.
 - JDK 17
 - Android Studio
 - Android SDK (API 36)
-- Android device or emulator running Android 13 (API 33) or newer
 
-## Building
-
-Clone the repository:
-
-```bash
-git clone https://github.com/sjkornelsen/bard.git
-cd bard
-```
-
-Build the debug APK:
+## Build
 
 ```bash
 ./gradlew assembleDebug
 ```
 
-The generated APK can be found at:
-
-```text
-app/build/outputs/apk/debug/app-debug.apk
-```
-
-Release signing instructions are documented in `RELEASE.md`.
-
-Signing keys, keystores, and `keystore.properties` should never be committed to source control.
+Release signing instructions are available in RELEASE.md.
 
 ---
 
 # Privacy & Security
 
-Bard is designed to keep your audiobook library on your device.
+Bard does not include analytics, advertising, telemetry, or user accounts.
 
-The application:
+Local audiobooks remain on your device, and RSS downloads are stored only in Bard's private application storage.
 
-- does not include analytics or advertising;
-- does not create a Bard account;
-- does not collect telemetry;
-- does not synchronize user data with external servers;
-- stores RSS downloads only in Bard's private application storage.
+When using public library loans, authentication and media delivery continue to be handled by the provider's own systems.
 
 Release builds disable WebView debugging.
-
-Local audiobook files remain in their original location within the shared `Audiobooks` folder and are never copied into Bard's private storage.
-
-When using public library loans, authentication and media delivery continue to be handled by the provider's own systems. Bard is designed not to intentionally collect authentication credentials or protected media URLs.
-
-Android may display a foreground media playback notification while audio is playing. This notification is used solely to keep playback active while the screen is off.
 
 ---
 
