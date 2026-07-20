@@ -246,23 +246,13 @@ Current limitations include:
 
 # Architecture
 
-Bard is a native Android application written in Kotlin using Jetpack Compose. Rather than building separate applications for each audiobook source, Bard presents every supported source through a single library and a consistent playback experience.
+Bard is a native Android application written in Kotlin using Jetpack Compose.
 
-The application is organized around a small number of independent components:
+Its architecture is intentionally simple, with separate components responsible for library management, playback, RSS feeds, local audiobook discovery, and persistent user data.
 
-| Component | Purpose |
-|-----------|---------|
-| **Unified Library** | Combines all supported audiobook sources into a single collection. |
-| **Progress Store** | Persists playback position, playback speed, and recently played ordering. |
-| **Local Library** | Discovers and indexes audiobooks stored in the shared `Audiobooks` folder. |
-| **RSS Repository** | Retrieves, parses, and caches RSS audiobook feeds. |
-| **RSS Download Manager** | Manages offline RSS downloads stored in Bard's private application storage. |
-| **Playback Controllers** | Provide playback for local, RSS, and library sources through a unified player interface. |
-| **User Interface** | Built with Jetpack Compose using Bard's Light-inspired design language. |
+Regardless of source, every audiobook is presented through the same unified library and player interface, providing a consistent listening experience throughout the application.
 
-Although every source shares the same interface, playback remains source-specific. This allows each source to use the most appropriate playback implementation while presenting a consistent experience to the user.
-
-The interface incorporates selected resources derived from the Light SDK and uses the Light Phone keyboard component where appropriate.
+Bard incorporates selected user-interface resources derived from the Light SDK.
 
 ---
 
