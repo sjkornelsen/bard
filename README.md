@@ -124,7 +124,7 @@ Bard currently supports accessing library loans through Libby using a user's own
 
 Bard is not affiliated with, endorsed by, sponsored by, or supported by Light, OverDrive, or Libby.
 
-Users are responsible for complying with the terms governing any third-party services they choose to use with Bard. OverDrive's terms place restrictions on reverse engineering, modifying, and creating derivative software around its services and software.:contentReference[oaicite:0]{index=0}
+Users are responsible for complying with the terms governing any third-party services they choose to use with Bard. OverDrive's terms place restrictions on reverse engineering, modifying, and creating derivative software around its services and software.
 
 Libby is a trademark of OverDrive, Inc. All other trademarks belong to their respective owners.
 
