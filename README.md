@@ -10,11 +10,22 @@
 
   ### Local audiobooks
 
-  - Single-file MP3 and M4B audiobooks.
-  - Files placed directly in Light Phone III/Audiobooks.
-  - Embedded title and artist metadata when available, with filename fallback.
-  - Manual rescanning from Settings → Local Books.
-  - Playback entirely from the file already stored on the phone.
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/books.jpg" width="300" alt="Unified Books screen"><br><strong>Books</strong></td>
+    <td align="center"><img src="docs/screenshots/player.jpg" width="300" alt="Audiobook Player screen"><br><strong>Player</strong></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/settings.jpg" width="300" alt="Bard Settings screen"><br><strong>Settings</strong></td>
+    <td align="center"><img src="docs/screenshots/downloads.jpg" width="300" alt="Downloaded audiobooks screen"><br><strong>Downloads</strong></td>
+  </tr>
+</table>
+
+---
+
+## Features
 
   Local scanning is intentionally limited to the top level of the Audiobooks folder. Bard does not scan
   subfolders or copy local books into app-private storage.
