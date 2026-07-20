@@ -6,7 +6,7 @@ Bard is an audiobook player built specifically for the Light Phone III. It bring
 
 Instead of treating audiobooks as another streaming platform, Bard treats them as books. Every supported source appears together in one unified library with one consistent player, allowing you to focus on listening instead of navigating storefronts, recommendations, or media feeds.
 
-There are no recommendations, no cover art, no social features, and no storefronts—just your books.
+There are no recommendations, storefronts, advertisements, social features, or cover art—just your books.
 
 Bard is currently in **alpha**. While it is already suitable for daily use, features and behavior may continue to evolve before a stable release.
 
@@ -61,9 +61,7 @@ Local scanning is intentionally limited to the top level of the shared `Audioboo
 
 Bard can optionally connect to your public library audiobook loans so borrowed books appear alongside your local library.
 
-### Features
-
-- Public library loans use the same player interface and controls as every other audiobook source.
+Public library loans use the same player interface and controls as every other audiobook source.
 
 Current releases use Libby's **Copy to Another Device** connection process to authorize eligible library loans.
 
@@ -79,9 +77,7 @@ Bard also supports standard RSS audiobook feeds.
 
 Each RSS item is treated as an individual audiobook and appears alongside every other supported source.
 
-### Features
-
-- RSS Audiobooks use the same player interface and controls as every other audiobook source.
+RSS Audiobooks use the same player interface and controls as every other audiobook source.
 
 Downloads are always initiated by the user.
 
@@ -182,7 +178,7 @@ Bard incorporates selected user-interface resources derived from the Light SDK.
 ./gradlew assembleDebug
 ```
 
-Release signing instructions are available in RELEASE.md.
+Release signing instructions are available in `RELEASE.md`.
 
 ---
 
@@ -259,39 +255,33 @@ Local audiobooks are always available offline. RSS audiobooks may be downloaded 
 
 # Important
 
-Bard is an independent, unofficial project.
+Bard is an independent, unofficial open-source project.
 
-Bard is not affiliated with, endorsed by, sponsored by, supported by, or approved by The Light Phone, Inc., OverDrive, Inc., or any public library system.
+Bard is not affiliated with, endorsed by, sponsored by, or approved by The Light Phone, Inc., OverDrive, Inc., or any public library system.
 
-Bard does not include or redistribute the Libby Android application, source code, audiobook content, DRM-protected media, user credentials, or authentication data.
+Bard's optional public library integration requires the user's own authorized library account and uses the provider's official authentication and playback systems. Bard does not provide access to books that have not been legitimately borrowed.
 
-Bard's optional public-library functionality requires the user's own authorized library account and uses the provider's official services for authentication and playback. Bard does not provide access to books that have not been legitimately borrowed.
-
-Bard is not designed to extract or host audiobook files, remove or bypass DRM, expose protected media URLs, or provide access to books outside the provider's authorized playback system.
+Bard does not redistribute third-party applications, audiobook content, DRM-protected media, or user credentials.
 
 Compatibility with third-party services is not guaranteed and may change over time as those services evolve.
 
-Users are responsible for ensuring that their use of Bard complies with the terms governing any third-party services they choose to access through the application.
+Users are responsible for ensuring that their use of Bard complies with the terms governing any third-party services they choose to access.
 
 Libby and OverDrive are trademarks of OverDrive, Inc.
 
 Light Phone and Light OS are trademarks of The Light Phone, Inc.
 
-Other trademarks and product names belong to their respective owners and are used solely to identify compatibility with third-party products and services.
+Other trademarks are the property of their respective owners and are used solely to identify compatibility with third-party products and services.
 
 ---
 
 # License
 
-Copyright © 2026 Stan Kornelsen.
-
-The original Bard source code is licensed under the MIT License.
+Bard is licensed under the MIT License.
 
 See [LICENSE](LICENSE) for the complete license text.
 
-Bard also incorporates user-interface components and resources derived from the Light SDK. Applicable copyright notices and license terms are reproduced in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
-
-Third-party components remain subject to their own licenses. The Bard license does not grant rights to any third-party software, services, trademarks, or copyrighted content.
+Bard incorporates selected resources derived from the Light SDK. Applicable notices are included in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ---
 
