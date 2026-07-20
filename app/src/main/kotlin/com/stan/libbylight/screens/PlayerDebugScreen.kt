@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.stan.libbylight.BuildConfig
 import com.stan.libbylight.LibbyBridge
+import com.stan.libbylight.LibbyPlaybackForegroundService
 import com.stan.libbylight.LibbyWebPlayer
 import com.stan.libbylight.library.Audiobook
 import com.stan.libbylight.library.AudiobookProgressStore
@@ -115,6 +116,8 @@ fun PlayerDebugScreen() {
     var currentUrl by remember { mutableStateOf("") }
     val connectState by LibbyConnectCoordinator.connectState.collectAsState()
     val libbySessionState by LibbyConnectCoordinator.sessionState.collectAsState()
+    val libbyRendererFailed by LibbyWebPlayer.rendererFailed.collectAsState()
+    val libbyPlaybackHostFailed by LibbyPlaybackForegroundService.startFailed.collectAsState()
     val sessionReady = libbySessionState == LibbySessionState.Connected
     val currentSessionReady by rememberUpdatedState(sessionReady)
     var showBooks by remember { mutableStateOf(true) }
@@ -701,6 +704,10 @@ fun PlayerDebugScreen() {
                         ?.takeIf { it.source == AudiobookSource.Rss && activeRssFeedId != null }
                         ?.let { book -> { RssDownloadManager.start(book, activeRssFeedId!!) } },
                     statusText = when {
+                        activeBook?.source == AudiobookSource.Libby && libbyPlaybackHostFailed ->
+                            "Could not keep Libby playback active"
+                        activeBook?.source == AudiobookSource.Libby && libbyRendererFailed ->
+                            "Libby player disconnected"
                         activeBook?.source == AudiobookSource.Libby &&
                             state.readiness != PlayerReadiness.Ready -> "Connecting to Libby"
                         localPlayerState.readiness == PlayerReadiness.Preparing &&
@@ -2091,17 +2098,25 @@ private fun VersionScreen(onBack: () -> Unit) {
                 ),
                 center = LightTopBarCenter.Text("Version"),
             )
-            Box(
+            Column(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
                     .padding(horizontal = 2f.gridUnitsAsDp()),
-                contentAlignment = Alignment.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
             ) {
                 LightText(
                     text = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                     variant = LightTextVariant.Paragraph,
                     align = TextAlign.Center,
+                )
+                Spacer(Modifier.height(1f.gridUnitsAsDp()))
+                LightText(
+                    text = "While Libby is playing, Bard shows a notification to keep playback active.",
+                    variant = LightTextVariant.Detail,
+                    align = TextAlign.Center,
+                    lighten = true,
                 )
             }
         }

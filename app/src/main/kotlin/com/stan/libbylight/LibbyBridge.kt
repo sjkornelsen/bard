@@ -582,9 +582,7 @@ object LibbyBridge {
                     Log.d(
                         BRIDGE_TAG,
                         "${json.optString("command")} -> ${json.optBoolean("ok")} " +
-                            "labels=${state?.optJSONObject("controlLabels")} " +
-                            "playing=${state?.optBoolean("isPlaying")} " +
-                            "position=${state?.optDouble("positionSeconds")}",
+                            "playing=${state?.optBoolean("isPlaying")}",
                     )
                 }
 
@@ -598,8 +596,7 @@ object LibbyBridge {
                     BRIDGE_TAG,
                     "Speed selected requested=${json.optDouble("speed")} " +
                         "actual=${json.optDouble("actualSpeed")} " +
-                        "direct=${json.optBoolean("direct")} " +
-                        "label=${json.optString("label")}",
+                        "direct=${json.optBoolean("direct")}",
                 )
 
                 "speedOptionMissing" -> Log.w(
@@ -612,12 +609,22 @@ object LibbyBridge {
                     Log.e(BRIDGE_TAG, "Frame reported an error")
                 }
             }
-        } catch (error: Exception) {
-            Log.e(BRIDGE_TAG, "Could not parse frame message", error)
+        } catch (_: Exception) {
+            Log.e(BRIDGE_TAG, "Could not parse frame message")
         }
     }
 
     fun stopPlaybackHost() = updatePlaybackHost(false)
+
+    fun resetForRecreatedWebView() {
+        stopPlaybackHost()
+        installed = false
+        activeReplyProxy = null
+        activeFrameScore = -1
+        pendingStateCallbacks.clear()
+        applicationContext = null
+        capabilityDiagnostic = "Frame bridge not initialized"
+    }
 
     private fun updatePlaybackHost(isPlaying: Boolean) {
         applicationContext?.let { context ->

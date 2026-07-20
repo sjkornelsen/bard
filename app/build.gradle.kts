@@ -1,7 +1,25 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application") version "8.6.0"
     id("org.jetbrains.kotlin.android") version "2.0.21"
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"
+}
+
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.isFile) {
+        keystorePropertiesFile.inputStream().use(::load)
+    }
+}
+val releaseTaskRequested = gradle.startParameter.taskNames.any {
+    it.contains("release", ignoreCase = true)
+}
+
+if (releaseTaskRequested && !keystorePropertiesFile.isFile) {
+    throw GradleException(
+        "Release signing requires the ignored keystore.properties file. See RELEASE.md.",
+    )
 }
 
 android {
@@ -12,8 +30,29 @@ android {
         applicationId = "com.stan.libbylight"
         minSdk = 33
         targetSdk = 34
-        versionCode = 2
-        versionName = "0.1.0-alpha2"
+        versionCode = 3
+        versionName = "0.1.0-alpha3"
+    }
+
+    signingConfigs {
+        if (keystorePropertiesFile.isFile) {
+            create("release") {
+                storeFile = file(requireNotNull(keystoreProperties.getProperty("storeFile")))
+                storePassword = requireNotNull(keystoreProperties.getProperty("storePassword"))
+                keyAlias = requireNotNull(keystoreProperties.getProperty("keyAlias"))
+                keyPassword = requireNotNull(keystoreProperties.getProperty("keyPassword"))
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = false
+            isShrinkResources = false
+            if (keystorePropertiesFile.isFile) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
     }
 
     sourceSets["main"].kotlin.srcDirs("src/main/kotlin")

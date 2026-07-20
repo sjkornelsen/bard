@@ -10,6 +10,9 @@ import android.content.Intent
 import android.os.IBinder
 import android.util.Log
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Keeps Bard's existing process and application-scoped Libby WebView perceptible while Libby plays.
@@ -24,6 +27,7 @@ class LibbyPlaybackForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startForeground(NOTIFICATION_ID, buildNotification())
         running.set(true)
+        mutableStartFailed.value = false
         Log.d(TAG, "foreground playback host started")
         return START_NOT_STICKY
     }
@@ -77,6 +81,8 @@ class LibbyPlaybackForegroundService : Service() {
         private const val NOTIFICATION_ID = 41
         private const val TAG = "LibbyPlaybackService"
         private val running = AtomicBoolean(false)
+        private val mutableStartFailed = MutableStateFlow(false)
+        val startFailed: StateFlow<Boolean> = mutableStartFailed.asStateFlow()
 
         fun update(context: Context, isPlaying: Boolean) {
             val appContext = context.applicationContext
@@ -88,10 +94,12 @@ class LibbyPlaybackForegroundService : Service() {
                         )
                     } catch (error: RuntimeException) {
                         running.set(false)
-                        Log.e(TAG, "could not start foreground playback host", error)
+                        mutableStartFailed.value = true
+                        Log.e(TAG, "could not start foreground playback host")
                     }
                 }
             } else if (running.compareAndSet(true, false)) {
+                mutableStartFailed.value = false
                 appContext.stopService(
                     Intent(appContext, LibbyPlaybackForegroundService::class.java),
                 )
