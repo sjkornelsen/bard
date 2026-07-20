@@ -6,14 +6,14 @@ plugins {
 
 android {
     namespace = "com.stan.libbylight"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.stan.libbylight"
-        minSdk = 26
+        minSdk = 33
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1"
+        versionCode = 2
+        versionName = "0.1.0-alpha2"
     }
 
     sourceSets["main"].kotlin.srcDirs("src/main/kotlin")
@@ -28,6 +28,7 @@ android {
     }
 
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 
@@ -51,4 +52,5 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("androidx.webkit:webkit:1.9.0")
+    implementation("com.thelightphone.lp3keyboard:ui:0.0.11")
 }
