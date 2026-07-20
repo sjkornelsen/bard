@@ -4,10 +4,13 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.MutableContextWrapper
 import android.content.pm.ApplicationInfo
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.ConsoleMessage
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -16,6 +19,9 @@ import org.json.JSONArray
 import org.json.JSONObject
 import com.stan.libbylight.library.LoanItem
 import kotlin.coroutines.resume
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 private const val TAG = "LibbyWebPlayer"
 private const val LIBBY_ROOT = "https://libbyapp.com/"
@@ -31,6 +37,8 @@ object LibbyWebPlayer {
 
     private var webView: WebView? = null
     private var applicationContext: Context? = null
+    private val mutableRendererFailed = MutableStateFlow(false)
+    val rendererFailed: StateFlow<Boolean> = mutableRendererFailed.asStateFlow()
 
     @SuppressLint("SetJavaScriptEnabled")
     fun init(context: Context) {
@@ -66,8 +74,26 @@ object LibbyWebPlayer {
 
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(view: WebView, url: String) {
+                    mutableRendererFailed.value = false
                     Log.d(TAG, "onPageFinished: ${safeRouteName(url)}")
                     CookieManager.getInstance().flush()
+                }
+
+                override fun onRenderProcessGone(
+                    view: WebView,
+                    detail: RenderProcessGoneDetail,
+                ): Boolean {
+                    Log.e(TAG, "Libby renderer disconnected crashed=${detail.didCrash()}")
+                    mutableRendererFailed.value = true
+                    (view.parent as? ViewGroup)?.removeView(view)
+                    webView = null
+                    LibbyBridge.resetForRecreatedWebView()
+                    view.destroy()
+                    Handler(Looper.getMainLooper()).post {
+                        applicationContext?.let(::init)
+                        loadLoginPage()
+                    }
+                    return true
                 }
             }
             webChromeClient = object : WebChromeClient() {
@@ -107,6 +133,7 @@ object LibbyWebPlayer {
 
     /** Clears only this app's local WebView-backed Libby session. */
     fun clearLocalLibbySession(onComplete: () -> Unit) {
+        LibbyBridge.stopPlaybackHost()
         val current = requireWebView()
         val clearPageStorage = """
             (() => {
@@ -208,8 +235,8 @@ object LibbyWebPlayer {
                 }
                 Log.d(TAG, "scrapeAudiobookLoans: ${items.size} loans")
                 onResult(items)
-            } catch (error: Exception) {
-                Log.e(TAG, "scrapeAudiobookLoans failed", error)
+            } catch (_: Exception) {
+                Log.e(TAG, "scrapeAudiobookLoans failed")
                 onResult(emptyList())
             }
         }
@@ -255,8 +282,8 @@ object LibbyWebPlayer {
                     (json.optBoolean("realm") || url.contains("/shelf") || url.contains("/open/loan/"))
                 Log.d(TAG, "checkIsLoggedIn: route=${safeRouteName(url)} initialized=$initialized")
                 onResult(initialized)
-            } catch (error: Exception) {
-                Log.e(TAG, "checkIsLoggedIn failed", error)
+            } catch (_: Exception) {
+                Log.e(TAG, "checkIsLoggedIn failed")
                 onResult(false)
             }
         }
