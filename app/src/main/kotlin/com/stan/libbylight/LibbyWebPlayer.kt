@@ -107,6 +107,7 @@ object LibbyWebPlayer {
 
     /** Clears only this app's local WebView-backed Libby session. */
     fun clearLocalLibbySession(onComplete: () -> Unit) {
+        LibbyBridge.stopPlaybackHost()
         val current = requireWebView()
         val clearPageStorage = """
             (() => {

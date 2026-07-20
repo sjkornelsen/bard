@@ -28,6 +28,7 @@ object LibbyBridge {
     private var activeFrameScore = -1
     private var installed = false
     private var capabilityDiagnostic = "Frame bridge not initialized"
+    private var applicationContext: android.content.Context? = null
 
     private val pendingStateCallbacks =
         ConcurrentHashMap<String, (PlayerState) -> Unit>()
@@ -58,9 +59,10 @@ object LibbyBridge {
             previousLoan != nextLoan
 
         if (leftPlayer || changedLoan) {
+            updatePlaybackHost(false)
             Log.d(
                 BRIDGE_TAG,
-                "Invalidating player frame: previous=$previousLoan next=$nextLoan",
+                "Invalidating player frame: leftPlayer=$leftPlayer changedLoan=$changedLoan",
             )
             activeReplyProxy = null
             activeFrameScore = -1
@@ -452,6 +454,7 @@ object LibbyBridge {
     /** Must be called before the first page is loaded. */
     fun install(webView: WebView) {
         if (installed) return
+        applicationContext = webView.context.applicationContext
 
         val messageSupported =
             WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)
@@ -556,27 +559,26 @@ object LibbyBridge {
                     val labels = state.optJSONObject("controlLabels")
                     Log.d(
                         BRIDGE_TAG,
-                        "Frame ready origin=$sourceOrigin main=$isMainFrame score=$score " +
-                            "url=${state.optString("pageUrl")} labels=$labels",
+                        "Frame ready main=$isMainFrame score=$score labelsAvailable=${labels != null}",
                     )
                     if (score > activeFrameScore) {
                         activeFrameScore = score
                         activeReplyProxy = replyProxy
                         Log.d(BRIDGE_TAG, "Selected active player frame score=$score")
                     }
-                    if (score >= 10) {
-                        Log.d(BRIDGE_TAG, "Active controls inventory=${json.optJSONArray("inventory")}")
-                    }
                 }
 
                 "state" -> {
                     val id = json.optString("id")
                     val callback = pendingStateCallbacks.remove(id) ?: return
-                    callback(PlayerState.fromJson(json.optJSONObject("state") ?: JSONObject()))
+                    val playerState = PlayerState.fromJson(json.optJSONObject("state") ?: JSONObject())
+                    updatePlaybackHost(playerState.isPlaying)
+                    callback(playerState)
                 }
 
                 "commandResult" -> {
                     val state = json.optJSONObject("state")
+                    state?.let { updatePlaybackHost(it.optBoolean("isPlaying", false)) }
                     Log.d(
                         BRIDGE_TAG,
                         "${json.optString("command")} -> ${json.optBoolean("ok")} " +
@@ -588,8 +590,8 @@ object LibbyBridge {
 
                 "inventory" -> Log.d(
                     BRIDGE_TAG,
-                    "Inventory score=${json.optInt("score")} url=${json.optString("url")} " +
-                        "buttons=${json.optJSONArray("buttons")}",
+                    "Inventory received score=${json.optInt("score")} " +
+                        "buttonCount=${json.optJSONArray("buttons")?.length() ?: 0}",
                 )
 
                 "speedSelected" -> Log.d(
@@ -602,14 +604,25 @@ object LibbyBridge {
 
                 "speedOptionMissing" -> Log.w(
                     BRIDGE_TAG,
-                    "Speed option missing ${json.optDouble("speed")}; " +
-                        "inventory=${json.optJSONArray("inventory")}",
+                    "Speed option missing ${json.optDouble("speed")}",
                 )
 
-                "error" -> Log.e(BRIDGE_TAG, "Frame error: ${json.optString("message")}")
+                "error" -> {
+                    updatePlaybackHost(false)
+                    Log.e(BRIDGE_TAG, "Frame reported an error")
+                }
             }
         } catch (error: Exception) {
-            Log.e(BRIDGE_TAG, "Could not parse frame message: $raw", error)
+            Log.e(BRIDGE_TAG, "Could not parse frame message", error)
         }
     }
+
+    fun stopPlaybackHost() = updatePlaybackHost(false)
+
+    private fun updatePlaybackHost(isPlaying: Boolean) {
+        applicationContext?.let { context ->
+            LibbyPlaybackForegroundService.update(context, isPlaying)
+        }
+    }
+
 }
